@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Online Store</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: linear-gradient(to right, #f8f9fa, #e9ecef);
+}
+
+header {
+    background: linear-gradient(to right, #ff6a00, #ff9800);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
+
+nav {
+    background-color: #333;
+    padding: 12px;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 20px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+nav a:hover {
+    color: #ff9800;
+}
+
+.container {
+    padding: 30px;
+}
+
+/* Horizontal Product Card */
+.product {
+    display: flex;
+    align-items: center;
+    background: white;
+    margin: 20px auto;
+    width: 85%;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.product:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+}
+
+.product img {
+    width: 250px;
+    height: 200px;
+    object-fit: cover;
+    background: #ddd;
+}
+
+.product-details {
+    padding: 20px;
+    flex: 1;
+}
+
+.product-details h3 {
+    margin-top: 0;
+    font-size: 22px;
+}
+
+.price {
+    color: #28a745;
+    font-size: 20px;
+    margin: 10px 0;
+}
+
+button {
+    background: linear-gradient(to right, #ff6a00, #ff9800);
+    border: none;
+    padding: 10px 18px;
+    color: white;
+    cursor: pointer;
+    border-radius: 25px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    🛍 My Online Store
+</header>
+
+<nav>
+    <a href="#">Home</a>
+    <a href="#">Shop</a>
+    <a href="#">Contact</a>
+</nav>
+
+<div class="container">
+
+    <div class="product">
+        <img src="https://shop.zebronics.com/cdn/shop/files/Zeb-Duke-pic-1.jpg?v=1710569970&width=1200" alt="Wireless Headphones">
+        <div class="product-details">
+            <h3>Wireless Headphones</h3>
+            <p class="price">Rs 2000</p>
+            <button onclick="addToCart('Wireless Headphones')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://cdn.mos.cms.futurecdn.net/FkGweMeB7hdPgaSFQdgsfj-2000-80.jpg" alt="Smart Watch">
+        <div class="product-details">
+            <h3>Smart Watch</h3>
+            <p class="price">Rs 3000</p>
+            <button onclick="addToCart('Smart Watch')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://www.primeabgb.com/wp-content/uploads/2025/08/Logitech-G502-LIGHTSPEED-Wireless-Gaming-Mouse.jpg" alt="Gaming Mouse">
+        <div class="product-details">
+            <h3>Gaming Mouse</h3>
+            <p class="price">Rs 1000</p>
+            <button onclick="addToCart('Gaming Mouse')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://m.media-amazon.com/images/I/510uTHyDqGL._AC_UF1000,1000_QL80_.jpg" alt="Laptop">
+        <div class="product-details">
+            <h3>Laptop</h3>
+            <p class="price">Rs 80000</p>
+            <button onclick="addToCart('Laptop')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://www.redragon.in/cdn/shop/files/8_4d429e0f-115b-4d67-94c6-82ae7f3de2ac.png?v=1770455101&width=1000" alt="Mechanical Keyboard">
+        <div class="product-details">
+            <h3>Mechanical Keyboard</h3>
+            <p class="price">Rs 1000</p>
+            <button onclick="addToCart('Mechanical Keyboard')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQWvafy-0WfPXha1gXvT6dJUNKPMIGbhgq_pkZJZ0qLJNZLhIYk05t31Gpmscpw97o4Ywvqsk_ONzXTa65NdJ2dIiiJ7BhjmEEFio9FNxcEyVviRDuHhUNs" alt="24-inch LED Monitor">
+        <div class="product-details">
+            <h3>24-inch LED Monitor</h3>
+            <p class="price">Rs 10000</p>
+            <button onclick="addToCart('24-inch LED Monitor')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://m.media-amazon.com/images/I/51wotGg0kvL.jpg" alt="WiFi Router">
+        <div class="product-details">
+            <h3>WiFi Router</h3>
+            <p class="price">Rs 2000</p>
+            <button onclick="addToCart('WiFi Router')">Add to Cart</button>
+        </div>
+    </div>
+
+    <div class="product">
+        <img src="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcS33URYU9BcBfFjZqdMMKeU7kMZ2ynyr8uXBa5_bhE5gI3yI2ZV550NiZR6TnW-E1BMYvw8SUIUeYzwjKeoKZD5RiJPmv6mxZoLhhXNw2A6mCsjXwLUe3Libg" alt="64GB USB Drive">
+        <div class="product-details">
+            <h3>64GB USB Drive</h3>
+            <p class="price">Rs 500</p>
+            <button onclick="addToCart('64GB USB Drive')">Add to Cart</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function addToCart(productName) {
+    alert(productName + " added to cart!");
+}
+</script>
+<div id="contact">
+    <h2>Contact Us</h2>
+    <p>Email: <a href="mailto:support@myonlinestore.com">support@myonlinestore.com</a></p>
+    <p>Phone: <a href="tel:+1234567890">+1 (234) 567-890</a></p>
+    <p>Address: 123 Online Store Blvd, Web City, Internet</p>
+</div>
+
+<script>
+function addToCart(productName) {
+    alert(productName + " added to cart!");
+}
+</script>
+
+</body>
+</html>
