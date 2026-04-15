@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Task Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #f093fb 50%, #f5576c 100%);
+    padding: 2rem 1rem 4rem;
+  }
+  .app { max-width: 660px; margin: 0 auto; }
+
+  .header { margin-bottom: 1.5rem; }
+  .date-line { font-size: 13px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+  .title { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .subtitle { font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+  .stat { border-radius: 16px; padding: 14px; text-align: center; backdrop-filter: blur(10px); }
+  .stat-total { background: rgba(255,255,255,0.25); }
+  .stat-done  { background: rgba(52,211,153,0.35); }
+  .stat-left  { background: rgba(251,191,36,0.35); }
+  .stat-over  { background: rgba(248,113,113,0.4); }
+  .stat-num { font-size: 22px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-label { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 6px; }
+  .progress-bar { height: 8px; background: rgba(255,255,255,0.25); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #34d399, #a78bfa); border-radius: 99px; transition: width 0.4s ease; }
+
+  .card { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+  .card-title { font-size: 13px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  input[type="text"], input[type="date"], select {
+    height: 40px; padding: 0 12px; border: 2px solid #e5e7eb;
+    border-radius: 12px; font-size: 14px; color: #111; outline: none; background: #fafafa; width: 100%;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, select:focus { border-color: #a78bfa; background: #fff; }
+
+  .tag-input-wrap { position: relative; }
+  .tag-suggestions {
+    position: absolute; top: 44px; left: 0; right: 0; background: #fff;
+    border: 2px solid #a78bfa; border-radius: 12px; z-index: 10; overflow: hidden; display: none;
+  }
+  .tag-suggestion { padding: 8px 12px; font-size: 13px; cursor: pointer; color: #374151; }
+  .tag-suggestion:hover { background: #f3f4f6; }
+  .selected-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .tag-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .tag-chip.removable { cursor: pointer; }
+  .remove-tag { font-size: 10px; opacity: 0.7; }
+
+  .add-btn {
+    height: 42px; width: 100%;
+    background: linear-gradient(135deg, #667eea, #f093fb);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .add-btn:hover { opacity: 0.9; }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .filter-btn {
+    background: #f3f4f6; border: none; border-radius: 20px;
+    padding: 5px 13px; font-size: 13px; color: #6b7280; cursor: pointer; font-weight: 500;
+  }
+  .filter-btn.active { background: linear-gradient(135deg, #667eea, #f093fb); color: #fff; }
+
+  .cat-filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cat-filter-btn {
+    border: none; border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer; opacity: 0.45; transition: opacity 0.15s;
+  }
+  .cat-filter-btn.active { opacity: 1; box-shadow: 0 0 0 2px currentColor; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.08em; margin: 1rem 0 8px;
+  }
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .task-item {
+    border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+    border-left: 4px solid transparent; background: #fafafa;
+    cursor: default; transition: box-shadow 0.15s, transform 0.1s;
+    user-select: none;
+  }
+  .task-item:hover { transform: translateX(2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .task-item.dragging { opacity: 0.35; }
+  .task-item.drag-over { box-shadow: 0 0 0 2.5px #a78bfa; transform: none; }
+  .task-item.done { opacity: 0.5; }
+  .task-item.done .task-text { text-decoration: line-through; color: #9ca3af; }
+  .task-item.pri-high { border-left-color: #f87171; background: #fff5f5; }
+  .task-item.pri-med  { border-left-color: #fbbf24; background: #fffbeb; }
+  .task-item.pri-low  { border-left-color: #34d399; background: #f0fdf4; }
+
+  .drag-handle { color: #d1d5db; font-size: 14px; padding-top: 3px; cursor: grab; flex-shrink: 0; }
+  .check-btn {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid #d1d5db;
+    background: transparent; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .check-btn.checked { background: linear-gradient(135deg, #34d399, #059669); border-color: transparent; }
+  .check-btn svg { display: none; }
+  .check-btn.checked svg { display: block; }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-text { font-size: 15px; color: #111827; font-weight: 500; line-height: 1.4; }
+  .task-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+
+  .priority-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .p-high { background: #fee2e2; color: #b91c1c; }
+  .p-med  { background: #fef3c7; color: #92400e; }
+  .p-low  { background: #d1fae5; color: #065f46; }
+
+  .due-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; background: #ede9fe; color: #5b21b6; }
+  .due-badge.overdue { background: #fee2e2; color: #b91c1c; }
+  .due-badge.today   { background: #fef3c7; color: #92400e; }
+
+  .delete-btn {
+    background: none; border: none; cursor: pointer; color: #d1d5db;
+    font-size: 15px; padding: 2px 4px; opacity: 0; flex-shrink: 0;
+  }
+  .task-item:hover .delete-btn { opacity: 1; color: #f87171; }
+  .empty-state { text-align: center; padding: 2.5rem 1rem; color: #9ca3af; font-size: 14px; }
+
+  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+  .toast {
+    background: #fff; border-radius: 14px; padding: 14px 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18); max-width: 300px;
+    border-left: 4px solid #a78bfa; font-size: 14px; color: #374151;
+    animation: slideIn 0.3s ease;
+  }
+  .toast strong { color: #111827; display: block; margin-bottom: 2px; font-size: 13px; }
+  @keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+  @media (max-width: 500px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toast-container"></div>
+<div class="app">
+
+  <div class="header">
+    <div class="date-line" id="date-line"></div>
+    <div class="title">My tasks ✨</div>
+    <div class="subtitle" id="greeting"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat stat-total"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+    <div class="stat stat-done"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Done</div></div>
+    <div class="stat stat-left"><div class="stat-num" id="stat-left">0</div><div class="stat-label">Left</div></div>
+    <div class="stat stat-over"><div class="stat-num" id="stat-over">0</div><div class="stat-label">Overdue</div></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label" id="progress-label">0% complete</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Add task</div>
+    <div class="form-grid">
+      <input class="full" type="text" id="new-task" placeholder="What needs to be done?" maxlength="80" />
+      <select id="new-priority">
+        <option value="high">🔴 High priority</option>
+        <option value="med" selected>🟡 Medium priority</option>
+        <option value="low">🟢 Low priority</option>
+      </select>
+      <select id="new-category">
+        <option value="">📁 Category…</option>
+        <option value="work">💼 Work</option>
+        <option value="personal">🏠 Personal</option>
+        <option value="health">💪 Health</option>
+        <option value="finance">💰 Finance</option>
+        <option value="learning">📚 Learning</option>
+      </select>
+      <input class="full" type="date" id="new-due" />
+      <div class="tag-input-wrap full">
+        <input type="text" id="new-tag-input" placeholder="🏷️ Add tags — type and press Enter…" autocomplete="off" />
+        <div class="tag-suggestions" id="tag-suggestions"></div>
+        <div class="selected-tags" id="selected-tags"></div>
+      </div>
+      <div class="full"><button class="add-btn" onclick="addTask()">+ Add Task</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('active',this)">Active</button>
+      <button class="filter-btn" onclick="setFilter('done',this)">Done</button>
+      <button class="filter-btn" onclick="setFilter('overdue',this)">⚠️ Overdue</button>
+      <button class="filter-btn" onclick="setFilter('today',this)">📅 Today</button>
+      <button class="filter-btn" onclick="setFilter('high',this)">🔴 High</button>
+    </div>
+    <div class="cat-filter-row" id="cat-filter-row"></div>
+    <div id="task-container"></div>
+  </div>
+
+</div>
+<script>
+const CATS = {
+  work:     { label:'💼 Work',     bg:'#ede9fe', color:'#5b21b6' },
+  personal: { label:'🏠 Personal', bg:'#dbeafe', color:'#1e40af' },
+  health:   { label:'💪 Health',   bg:'#d1fae5', color:'#065f46' },
+  finance:  { label:'💰 Finance',  bg:'#fef3c7', color:'#92400e' },
+  learning: { label:'📚 Learning', bg:'#fce7f3', color:'#9d174d' },
+};
+const TAG_PALETTES = [
+  ['#ede9fe','#5b21b6'],['#dbeafe','#1e40af'],['#d1fae5','#065f46'],
+  ['#fef3c7','#92400e'],['#fce7f3','#9d174d'],['#fee2e2','#b91c1c']
+];
+function tagColor(tag) {
+  let h=0; for(let c of tag) h=(h*31+c.charCodeAt(0))&0xffff;
+  return TAG_PALETTES[h%TAG_PALETTES.length];
+}
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const now = new Date();
+const todayStr = now.toISOString().split('T')[0];
+document.getElementById('date-line').textContent = DAYS[now.getDay()]+', '+MONTHS[now.getMonth()]+' '+now.getDate()+' '+now.getFullYear();
+const hr = now.getHours();
+document.getElementById('greeting').textContent = (hr<12?'Good morning! ☀️':hr<17?'Good afternoon! 🌤️':'Good evening! 🌙')+" Here's what's on your plate.";
+document.getElementById('new-due').value = todayStr;
+
+let tasks = JSON.parse(localStorage.getItem('tasks_v3')||'null') || [
+  {id:1,text:'Review project proposal',priority:'high',category:'work',tags:['urgent'],due:todayStr,done:false},
+  {id:2,text:'Reply to team emails',priority:'med',category:'work',tags:['email'],due:'',done:false},
+  {id:3,text:'Update weekly report',priority:'med',category:'work',tags:[],due:'',done:true},
+  {id:4,text:'Schedule 1:1 with manager',priority:'low',category:'personal',tags:[],due:'',done:false},
+];
+let nextId = Math.max(0,...tasks.map(t=>t.id))+1;
+let filter='all', catFilter='', pendingTags=[];
+function save(){ localStorage.setItem('tasks_v3',JSON.stringify(tasks)); }
+
+// TAG INPUT
+const tagInput = document.getElementById('new-tag-input');
+const tagSugg  = document.getElementById('tag-suggestions');
+function allTags(){ const s=new Set(); tasks.forEach(t=>(t.tags||[]).forEach(g=>s.add(g))); return[...s]; }
+
+tagInput.addEventListener('input',()=>{
+  const val=tagInput.value.trim().toLowerCase();
+  if(!val){tagSugg.style.display='none';return;}
+  const m=allTags().filter(t=>t.includes(val)&&!pendingTags.includes(t));
+  if(!m.length){tagSugg.style.display='none';return;}
+  tagSugg.innerHTML=m.map(x=>`<div class="tag-suggestion" onclick="addPendingTag('${x}')">${x}</div>`).join('');
+  tagSugg.style.display='block';
+});
+tagInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const val=tagInput.value.trim().toLowerCase().replace(/\s+/g,'-');
+    if(val&&!pendingTags.includes(val)) addPendingTag(val); else if(!val) addTask();
+  }
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.tag-input-wrap')) tagSugg.style.display='none'; });
+
+function addPendingTag(tag){ if(!pendingTags.includes(tag)) pendingTags.push(tag); tagInput.value=''; tagSugg.style.display='none'; renderPendingTags(); }
+function removePendingTag(tag){ pendingTags=pendingTags.filter(t=>t!==tag); renderPendingTags(); }
+function renderPendingTags(){
+  document.getElementById('selected-tags').innerHTML=pendingTags.map(t=>{
+    const [bg,color]=tagColor(t);
+    return `<span class="tag-chip removable" style="background:${bg};color:${color}" onclick="removePendingTag('${t}')"><span>${t}</span><span class="remove-tag"> ✕</span></span>`;
+  }).join('');
+}
+
+// ADD
+function addTask(){
+  const text=document.getElementById('new-task').value.trim();
+  if(!text) return;
+  tasks.unshift({id:nextId++,text,priority:document.getElementById('new-priority').value,
+    category:document.getElementById('new-category').value,
+    tags:[...pendingTags],due:document.getElementById('new-due').value,done:false});
+  document.getElementById('new-task').value='';
+  document.getElementById('new-due').value=todayStr;
+  pendingTags=[]; renderPendingTags();
+  save(); render();
+}
+document.getElementById('new-task').addEventListener('keydown',e=>{ if(e.key==='Enter') addTask(); });
+
+function toggle(id){ const t=tasks.find(t=>t.id===id); if(t){t.done=!t.done;save();render();} }
+function remove(id){ tasks=tasks.filter(t=>t.id!==id); save(); render(); }
+function setFilter(f,btn){ filter=f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }
+function setCatFilter(c){ catFilter=catFilter===c?'':c; render(); }
+
+function isOverdue(d){ return d&&d<todayStr; }
+function isToday(d){ return d===todayStr; }
+function fmtDate(d){ const[,m,day]=d.split('-'); return MONTHS[+m-1].slice(0,3)+' '+(+day); }
+
+function dueBadge(due){
+  if(!due) return '';
+  if(isOverdue(due)) return `<span class="due-badge overdue">⚠️ Overdue: ${fmtDate(due)}</span>`;
+  if(isToday(due))   return `<span class="due-badge today">📅 Due today</span>`;
+  return `<span class="due-badge">📅 ${fmtDate(due)}</span>`;
+}
+function catBadge(cat){
+  if(!cat||!CATS[cat]) return '';
+  const c=CATS[cat];
+  return `<span class="tag-chip" style="background:${c.bg};color:${c.color}">${c.label}</span>`;
+}
+function tagChips(tags){
+  return (tags||[]).map(t=>{ const[bg,color]=tagColor(t); return `<span class="tag-chip" style="background:${bg};color:${color}">${t}</span>`; }).join('');
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function taskHTML(t){
+  return `<div class="task-item pri-${t.priority}${t.done?' done':''}"
+    draggable="true"
+    ondragstart="dragStart(event,${t.id})"
+    ondragover="dragOver(event,${t.id})"
+    ondrop="drop(event,${t.id})"
+    ondragleave="dragLeave(event)"
+    ondragend="dragEnd(event)">
+    <span class="drag-handle" title="Drag to reorder">⠿</span>
+    <button class="check-btn${t.done?' checked':''}" onclick="toggle(${t.id})">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="task-body">
+      <div class="task-text">${esc(t.text)}</div>
+      <div class="task-meta">
+        <span class="priority-badge p-${t.priority}">${t.priority==='high'?'🔴 High':t.priority==='med'?'🟡 Medium':'🟢 Low'}</span>
+        ${catBadge(t.category)}${dueBadge(t.due)}${tagChips(t.tags)}
+      </div>
+    </div>
+    <button class="delete-btn" onclick="remove(${t.id})" title="Delete">✕</button>
+  </div>`;
+}
+
+// DRAG & DROP
+let dragId=null;
+function dragStart(e,id){ dragId=id; setTimeout(()=>{ const el=document.querySelector(`[data-drag="${id}"]`); },0); e.currentTarget.classList.add('dragging'); }
+function dragOver(e,id){ e.preventDefault(); if(id!==dragId) e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function dragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','dragging')); }
+function drop(e,targetId){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(dragId===targetId) return;
+  const fi=tasks.findIndex(t=>t.id===dragId), ti=tasks.findIndex(t=>t.id===targetId);
+  if(fi<0||ti<0) return;
+  const[item]=tasks.splice(fi,1); tasks.splice(ti,0,item);
+  save(); render();
+}
+
+function renderCatFilters(){
+  const used=[...new Set(tasks.map(t=>t.category).filter(Boolean))];
+  const row=document.getElementById('cat-filter-row');
+  row.innerHTML=used.map(c=>{
+    const cat=CATS[c]; if(!cat) return '';
+    return `<button class="cat-filter-btn${catFilter===c?' active':''}" style="background:${cat.bg};color:${cat.color}" onclick="setCatFilter('${c}')">${cat.label}</button>`;
+  }).join('');
+}
+
+function render(){
+  const total=tasks.length, done=tasks.filter(t=>t.done).length;
+  const over=tasks.filter(t=>!t.done&&isOverdue(t.due)).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-left').textContent=total-done;
+  document.getElementById('stat-over').textContent=over;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-label').textContent=pct+'% complete'+(pct===100&&total?' 🎉 All done!':'');
+  renderCatFilters();
+
+  let v=tasks;
+  if(filter==='active')  v=tasks.filter(t=>!t.done);
+  else if(filter==='done')    v=tasks.filter(t=>t.done);
+  else if(filter==='overdue') v=tasks.filter(t=>!t.done&&isOverdue(t.due));
+  else if(filter==='today')   v=tasks.filter(t=>isToday(t.due));
+  else if(filter==='high')    v=tasks.filter(t=>t.priority==='high');
+  if(catFilter) v=v.filter(t=>t.category===catFilter);
+
+  const active=v.filter(t=>!t.done), completed=v.filter(t=>t.done);
+  let html='';
+  if(!active.length&&!completed.length){
+    html='<div class="empty-state">✨ No tasks here. Add one above!</div>';
+  } else {
+    if(active.length) html+=`<div class="section-label">To do (${active.length})</div><div class="task-list">${active.map(taskHTML).join('')}</div>`;
+    if(completed.length) html+=`<div class="section-label">Completed (${completed.length})</div><div class="task-list">${completed.map(taskHTML).join('')}</div>`;
+  }
+  document.getElementById('task-container').innerHTML=html;
+}
+
+// REMINDER TOASTS
+function showToast(title,body){
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<strong>${title}</strong>${esc(body)}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),5000);
+}
+function checkReminders(){
+  tasks.filter(t=>!t.done).forEach(t=>{
+    if(t.due===todayStr&&!t._rt){ t._rt=true; showToast('⏰ Due today!',t.text); }
+    else if(isOverdue(t.due)&&!t._ro){ t._ro=true; showToast('⚠️ Overdue!',t.text); }
+  });
+}
+render(); checkReminders(); setInterval(checkReminders,60000);
+</script>
+</body>
+</html>
